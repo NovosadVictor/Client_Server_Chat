@@ -17,62 +17,86 @@ const int MAXSIZE = 1024;
 
 
 int main() {
-	std::string buf;
-	int MySock;// дискриптор сокета или как-то так
-	MySock = socket(AF_INET, SOCK_STREAM, 0);// создание сокета
+	char buf[MAXSIZE];
+	std::string online = "   Now online: ";
+	memset(buf, 0, MAXSIZE);
+	int MySock;
+	MySock = socket(AF_INET, SOCK_STREAM, 0);
 	if (MySock < 0) {
-		std::cout << "Error Mysocket\n " << std::endl;
+		std::cout << "Error My_1sock\n " << std::endl;
 		return -1;
 	}
-	sockaddr_in my_addr;// структура с адрессом
+	sockaddr_in my_addr;
 	memset(&my_addr, 0, sizeof(my_addr));
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_port = htons(8000);
 	my_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	if (bind(MySock, (sockaddr*)&my_addr, sizeof(my_addr)) != 0) {// связываем сокт с нашим адресом
-		std::cout << "\nError bind mysocket\n" << std::endl;	
+	if (bind(MySock, (sockaddr*)&my_addr, sizeof(my_addr)) != 0) {
+		std::cout << "\nError bind my_1socket\n" << std::endl;	
 		return -1;
 	}
-	if (listen(MySock, 2) != 0) {// готовим к входящим
+	if (listen(MySock, 2) != 0) {
 		std::cout << "\nError listen mysocket\n" << std::endl;
 		return -1;
 	}
-	std::cout << "Your name: ";// ну типа имя в чате и всякое такое
-	getline(std::cin, buf);// само имя
-	buf += ':';// так красивее
-	int ClientSock;// сокет, который будет джать 
-	ClientSock = socket(AF_INET, SOCK_STREAM, 0);
-	if (ClientSock < 0) {
-		std::cout << "\nError clientsock\n" << std::endl;
+	int ClientSock_1;
+	int ClientSock_2;
+	ClientSock_1 = socket(AF_INET, SOCK_STREAM, 0);
+	if (ClientSock_1 < 0) {
+		std::cout << "\nError client_1_sock\n" << std::endl;
 		return -1;
 	}
+	ClientSock_2 = socket(AF_INET, SOCK_STREAM, 0);
+        if (ClientSock_2 < 0) {
+                std::cout << "\nError client_2_sock\n" << std::endl;
+                return -1;
+        }
 	sockaddr_in client_addr;
 	unsigned int addrsize = sizeof(client_addr);
-	ClientSock = accept(MySock, (sockaddr*)&client_addr, &addrsize);// жду подключения
-	if (ClientSock < 0) {
-		std::cout << "\nError accept clientsock\n" << std::endl;
+	ClientSock_1 = accept(MySock, (sockaddr*)&client_addr, &addrsize);
+	if (ClientSock_1 < 0) {
+		std::cout << "\nError accept client_1_sock\n" << std::endl;
 		return -1;
 	}
+	recv(ClientSock_1, buf, MAXSIZE, 0);
+	std::cout << "Client 1"
+  		<< ":"
+		<< buf
+		<< " Connected\n" << std::endl;
+	online += buf;
+	online += " and ";
+	memset(buf, 0, MAXSIZE);
+	ClientSock_2 = accept(MySock, (sockaddr*)&client_addr, &addrsize);
+	if (ClientSock_2 < 0) {
+                std::cout << "\nError accept client_2_sock\n" << std::endl;
+                return -1;
+        }
+	recv(ClientSock_2, buf, MAXSIZE, 0);
+	std::cout << "Client 2"
+  		<< ":"
+		<< buf
+		<< " Connected\n" << std::endl;
+	online += buf;
+	memset(buf, 0, MAXSIZE);
+	char buf1[MAXSIZE];
+	memset(buf1, 0, MAXSIZE);
+	char buf2[MAXSIZE];
+	memset(buf2, 0, MAXSIZE);
+	send(ClientSock_1, &online[0], online.size(), 0);
+	send(ClientSock_2, &online[0], online.size(), 0);
 	while(true) {
-		size_t length = buf.size();// дальше тут просто махинации со строками, чтобы в строке всегда оставалось имя клиента а дальше через двоеточие сообщение и осле отправки сообщения в нашей строке остается только имя
-		std::string n = buf;
-		std::string s;
-		char buffer[MAXSIZE];
-		std::cout << buf << ":::Please write your massege" << std::endl;
-		getline(std::cin, s);
-		if (s == "PAUSE") {
-			std::cout << "Correct End connection" << std::endl;
-			break;
+		if (recv(ClientSock_1, buf1, MAXSIZE, 0) > 0) {
+			send(ClientSock_2, buf1, strlen(buf1), 0);
+			memset(buf1, 0, MAXSIZE);
 		}
-		buf += s;	
-	//	if (recv(Client_Sock_r, buffer, sizeof(buffer), 0) > 0)
-	//		std::cout << buffer << std::endl;
-		send(ClientSock, &buf[0], buf.size(), 0);// отправка сообщения
-		buf = n;
-//		shutdown(ClientSock, 2);// с этим пока не особо разобрался , но единственное , что понял, что с этой штукой сайт 127.0.0.1:8000  как бы показывает сообщение, иначе можно бесконечно вводить и только при завершении программы покажется сообщение, но это тоже не важно
+		if (recv(ClientSock_2, buf2, MAXSIZE, 0) > 0) {
+			send(ClientSock_1, buf2, strlen(buf2), 0);
+			memset(buf2, 0, MAXSIZE);
+		}
 	}
-	close(ClientSock);
+	close(ClientSock_1);
+	close(ClientSock_2);
 	close(MySock);
-	std::cout << "end Connecting" << std::endl; 
+	std::cout << "End Connecting..." << std::endl; 
 	return 0;
 }
